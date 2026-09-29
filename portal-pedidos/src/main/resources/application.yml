@@ -1,9 +1,7 @@
 # =====================================================================
-# Portal de Pedidos B2B - configuracao BASELINE (propositalmente insegura)
-# ---------------------------------------------------------------------
-# Perfil default = H2 (roda sem docker). Perfil "postgres" usa o banco
-# do docker-compose. As ms-configuracoes abaixo sao DIDATICAS e serao
-# corrigidas ao longo do curso (principalmente Aula 5 e Aula 6).
+# Estado apos a AULA 4 (criptografia + sessao).
+# Corrigido: AES-GCM (chave em config/env), JWT verificado, cookie seguro.
+# AINDA vulneravel: error.* verboso (Aula 5), Actuator/H2 abertos (Aula 6).
 # =====================================================================
 spring:
   application:
@@ -11,7 +9,6 @@ spring:
   profiles:
     active: h2
 
-  # A02 - dado sensivel (credencial do banco) hardcoded em texto claro no repositorio
   datasource:
     url: jdbc:h2:mem:portal;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
     username: sa
@@ -22,10 +19,7 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: true
-    properties:
-      hibernate:
-        format_sql: true
-    show-sql: true
+    show-sql: false
 
   sql:
     init:
@@ -33,20 +27,17 @@ spring:
       schema-locations: classpath:schema.sql
       data-locations: classpath:data.sql
 
-  # A05 - H2 console habilitado e acessivel (permite inspecionar/alterar o banco pelo navegador)
+  # A05 - ainda habilitado (corrigido na Aula 6)
   h2:
     console:
       enabled: true
       path: /h2-console
-      settings:
-        web-allow-others: true
 
   thymeleaf:
     cache: false
 
   servlet:
     multipart:
-      # Lab 2.4 - limite de tamanho de upload
       max-file-size: 5MB
       max-request-size: 6MB
 
@@ -55,18 +46,18 @@ server:
   servlet:
     session:
       cookie:
-        # A05/Session Management - flags de seguranca desligadas no baseline (Lab 4.3)
-        http-only: false
-        secure: false
+        # Lab 4.3 - flags de seguranca do cookie
+        http-only: true
+        secure: false        # DEV ONLY (sem HTTPS local)
         same-site: lax
+      timeout: 15m
   error:
-    # A05 / A09 - vaza stack trace e mensagem de excecao para o cliente
+    # A05/A09 - ainda verboso (corrigido na Aula 5)
     include-message: always
     include-stacktrace: always
     include-exception: true
-    include-binding-errors: always
 
-# A05 - TODOS os endpoints do Actuator expostos sem autenticacao
+# A05 - Actuator ainda totalmente exposto (corrigido na Aula 6)
 management:
   endpoints:
     web:
@@ -78,22 +69,17 @@ management:
     env:
       show-values: always
 
-# ---------------------------------------------------------------------
-# Configuracoes da aplicacao (chaves fracas / hardcoded de proposito)
-# ---------------------------------------------------------------------
 portal:
-  # A02 - segredo do JWT fraco e commitado no repositorio
   jwt:
-    secret: "portal-secret-2024"
-    expiration-ms: 86400000   # 24h - expiracao longa demais (A07)
-  upload:
-    # A05 - anexos gravados dentro de diretorio servido / sem isolamento
-    dir: ./uploads
-  # A02 - "chave" usada para "proteger" dados de pagamento (na verdade e so Base64)
+    # Lab 4.2 - chave Base64 (>=32 bytes). Override: PORTAL_JWT_SECRET
+    secret: ${PORTAL_JWT_SECRET:AyjpJmIAw5EyzdygA5Ydd2vm8pp5Sqed7wDAk6MFKbY=}
+    expiration-ms: 900000
   crypto:
-    enabled: false
+    # Lab 4.1 - chave Base64 de 32 bytes (AES-256). Override: PORTAL_CRYPTO_KEY
+    key: ${PORTAL_CRYPTO_KEY:cMlQRds5K9r42D8FYoxCQhM/vdyxStTh1Ew+OsG9Gjs=}
+  upload:
+    dir: ./uploads
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    com.thrive.portal: DEBUG
+    com.thrive.portal: INFO

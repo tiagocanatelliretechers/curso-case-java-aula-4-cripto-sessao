@@ -1,10 +1,11 @@
 -- Dados iniciais (seed) do Portal de Pedidos B2B.
 -- IDs atribuidos pela IDENTITY na ordem de insercao (previsivel: 1, 2, 3...).
 
--- Clientes (dados_pagamento "protegidos" apenas com Base64 - A02)
+-- Clientes. dados_pagamento entra em texto claro no seed e e CIFRADO (AES-GCM)
+-- no startup pelo SeedCryptoRunner (Lab 4.1). Em producao viria ja cifrado.
 INSERT INTO cliente (razao_social, cnpj, email, dados_pagamento) VALUES
- ('ACME Industria e Comercio LTDA', '12.345.678/0001-90', 'contato@acme.com', 'VklTQSA0MTExIDExMTEgMTExMSAxMTExIHZhbCAxMi8yNyBjdnYgMTIz'),
- ('Globex Distribuidora S/A',       '98.765.432/0001-10', 'compras@globex.com', 'TUFTVEVSQ0FSRCA1NTAwIDAwMDAgMDAwMCAwMDA0IHZhbCAwOC8yNiBjdnYgNDU2');
+ ('ACME Industria e Comercio LTDA', '12.345.678/0001-90', 'contato@acme.com', 'VISA 4111 1111 1111 1111 val 12/27 cvv 123'),
+ ('Globex Distribuidora S/A',       '98.765.432/0001-10', 'compras@globex.com', 'MASTERCARD 5500 0000 0000 0004 val 08/26 cvv 456');
 
 -- Usuarios (senha em MD5 sem salt - A02)
 -- admin@portal.com / admin123   | joao@acme.com / senha123   | maria@globex.com / senha123

@@ -1,5 +1,8 @@
 package com.thrive.portal.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jws;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,11 +15,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Filtro de autenticacao da API (/api/**). Confia nas claims decodificadas
- * pelo JwtService, que NAO verifica assinatura no baseline (ver JwtService).
+ * Lab 4.2 - autentica a API validando a ASSINATURA do JWT. Token invalido,
+ * forjado ou alg:none lanca excecao e a requisicao segue sem autenticacao
+ * (=> 401 nas rotas protegidas).
  */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -33,13 +36,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            Map<String, Object> claims = jwtService.lerClaimsSemVerificar(token);
-            if (claims != null && claims.get("sub") != null) {
-                String email = String.valueOf(claims.get("sub"));
-                String role = String.valueOf(claims.getOrDefault("role", "ROLE_USER"));
-                var auth = new UsernamePasswordAuthenticationToken(
-                        email, null, List.of(new SimpleGrantedAuthority(role)));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+            try {
+                Jws<Claims> jws = jwtService.validar(token);
+                Claims claims = jws.getBody();
+                String email = claims.getSubject();
+                String role = claims.get("role", String.class);
+                if (email != null && role != null) {
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            email, null, List.of(new SimpleGrantedAuthority(role)));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            } catch (JwtException e) {
+                // token invalido/forjado/expirado -> nao autentica
+                SecurityContextHolder.clearContext();
             }
         }
         filterChain.doFilter(request, response);
