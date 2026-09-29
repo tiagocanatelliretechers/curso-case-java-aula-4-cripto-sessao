@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Portal de Pedidos B2B</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<header>
+    <strong>Portal de Pedidos B2B</strong>
+    <nav>
+        <a th:href="@{/produtos}">Produtos</a>
+        <a th:href="@{/pedidos}">Meus Pedidos</a>
+        <a th:href="@{/admin}">Admin</a>
+        <a sec:authorize="!isAuthenticated()" th:href="@{/login}">Entrar</a>
+        <a sec:authorize="isAuthenticated()" th:href="@{/logout}">Sair</a>
+    </nav>
+</header>
+<main>
+    <div class="card">
+        <h1>Bem-vindo ao Portal de Pedidos B2B</h1>
+        <p>Aplicacao de referencia (propositalmente vulneravel) do curso CASE Java.</p>
+        <p class="warn">Ambiente de treinamento. NAO use dados reais nem exponha na internet.</p>
+        <p>
+            <a th:href="@{/produtos}">Ver catalogo</a> &middot;
+            <a th:href="@{/registrar}">Cadastrar cliente</a> &middot;
+            <a th:href="@{/login}">Entrar</a>
+        </p>
+    </div>
+</main>
+</body>
+</html>

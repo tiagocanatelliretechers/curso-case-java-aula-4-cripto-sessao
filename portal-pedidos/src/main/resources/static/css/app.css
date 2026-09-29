@@ -1,0 +1,19 @@
+* { box-sizing: border-box; }
+body { font-family: system-ui, Arial, sans-serif; margin: 0; background: #f4f5f7; color: #1f2933; }
+header { background: #1f2933; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+header a { color: #cbd2d9; text-decoration: none; margin-left: 16px; }
+header a:hover { color: #fff; }
+main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+.card { background: #fff; border: 1px solid #e4e7eb; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+h1, h2 { margin-top: 0; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e4e7eb; }
+th { background: #f4f5f7; }
+input, select, button, textarea { padding: 8px 10px; border: 1px solid #cbd2d9; border-radius: 6px; font-size: 14px; }
+button { background: #2563eb; color: #fff; border: none; cursor: pointer; }
+button:hover { background: #1d4ed8; }
+.msg { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+.err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+label { display: block; margin: 8px 0 4px; font-size: 14px; }
+pre { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 6px; overflow: auto; }

@@ -1,0 +1,63 @@
+# =====================================================================
+# Infra do curso CASE Java — sobe a aplicação + banco (+ ferramentas).
+# Não rode direto: use os scripts scripts/start.sh (Linux/macOS) ou
+# scripts/start.ps1 (Windows), que já cuidam de perfis e variáveis.
+#
+# Perfis:
+#   (default)      -> db + app
+#   --profile sonar-> adiciona SonarQube (Aula 5, SAST)
+# =====================================================================
+name: portal-b2b
+
+services:
+  db:
+    image: postgres:16
+    container_name: portal-db
+    environment:
+      POSTGRES_DB: portal
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: portal
+    # publicado em 5433 no host para não colidir com um Postgres local (5432)
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - portal-db-data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: ../portal-pedidos
+    container_name: portal-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      # Segredos DEV (a app também tem defaults no application.yml).
+      # Sobrescreva exportando estas variáveis no shell antes de subir.
+      PORTAL_JWT_SECRET: ${PORTAL_JWT_SECRET:-AyjpJmIAw5EyzdygA5Ydd2vm8pp5Sqed7wDAk6MFKbY=}
+      PORTAL_CRYPTO_KEY: ${PORTAL_CRYPTO_KEY:-cMlQRds5K9r42D8FYoxCQhM/vdyxStTh1Ew+OsG9Gjs=}
+    ports:
+      - "8080:8080"
+
+  # ---- Ferramenta da Aula 5 (SAST). Sobe só com o perfil "sonar". ----
+  sonarqube:
+    image: sonarqube:10-community
+    container_name: portal-sonar
+    profiles: ["sonar"]
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonar-data:/opt/sonarqube/data
+      - sonar-exts:/opt/sonarqube/extensions
+
+volumes:
+  portal-db-data:
+  sonar-data:
+  sonar-exts:

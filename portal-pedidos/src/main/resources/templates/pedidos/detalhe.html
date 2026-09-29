@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Pedido - Portal B2B</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<header>
+    <strong>Portal de Pedidos B2B</strong>
+    <nav><a th:href="@{/pedidos}">Meus Pedidos</a><a th:href="@{/logout}">Sair</a></nav>
+</header>
+<main>
+    <div class="msg" th:if="${mensagem}" th:text="${mensagem}"></div>
+    <div class="err" th:if="${pedido == null}">Pedido nao encontrado.</div>
+    <div class="card" th:if="${pedido != null}">
+        <h1>Pedido #<span th:text="${pedido.id}">0</span></h1>
+        <p>Cliente ID: <span th:text="${pedido.clienteId}">0</span> &middot;
+           Status: <span th:text="${pedido.status}">ABERTO</span> &middot;
+           Total: <span th:text="${pedido.total}">0.00</span></p>
+        <table>
+            <thead><tr><th>Produto</th><th>Qtd</th><th>Preco unit.</th></tr></thead>
+            <tbody>
+            <tr th:each="it : ${pedido.itens}">
+                <td th:text="${it.produtoNome}">produto</td>
+                <td th:text="${it.quantidade}">1</td>
+                <td th:text="${it.precoUnitario}">0.00</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="card" th:if="${pedido != null}">
+        <h2>Enviar Comprovante</h2>
+        <form th:action="@{'/pedidos/' + ${pedido.id} + '/comprovante'}" method="post" enctype="multipart/form-data">
+            <input type="file" name="arquivo"/>
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

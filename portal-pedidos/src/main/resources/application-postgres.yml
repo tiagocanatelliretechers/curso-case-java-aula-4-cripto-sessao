@@ -1,0 +1,14 @@
+# Perfil "postgres" - usado pelo docker-compose.
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/portal
+    username: portal
+    password: portal
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: always
+      platform: postgres
+  h2:
+    console:
+      enabled: false

@@ -1,0 +1,27 @@
+# docker-compose para subir o Portal de Pedidos B2B + PostgreSQL.
+# Uso:  docker compose up --build
+# App:  http://localhost:8080
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: portal
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: portal
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+    ports:
+      - "8080:8080"

@@ -1,0 +1,8 @@
+target/
+uploads/
+*.log
+.DS_Store
+dependency-check-report.*
+.idea/
+*.iml
+.vscode/

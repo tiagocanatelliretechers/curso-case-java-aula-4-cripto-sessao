@@ -1,0 +1,99 @@
+# =====================================================================
+# Portal de Pedidos B2B - configuracao BASELINE (propositalmente insegura)
+# ---------------------------------------------------------------------
+# Perfil default = H2 (roda sem docker). Perfil "postgres" usa o banco
+# do docker-compose. As ms-configuracoes abaixo sao DIDATICAS e serao
+# corrigidas ao longo do curso (principalmente Aula 5 e Aula 6).
+# =====================================================================
+spring:
+  application:
+    name: portal-pedidos
+  profiles:
+    active: h2
+
+  # A02 - dado sensivel (credencial do banco) hardcoded em texto claro no repositorio
+  datasource:
+    url: jdbc:h2:mem:portal;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password: sa
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: true
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+  # A05 - H2 console habilitado e acessivel (permite inspecionar/alterar o banco pelo navegador)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+  thymeleaf:
+    cache: false
+
+  servlet:
+    multipart:
+      # Lab 2.4 - limite de tamanho de upload
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+server:
+  port: 8080
+  servlet:
+    session:
+      cookie:
+        # A05/Session Management - flags de seguranca desligadas no baseline (Lab 4.3)
+        http-only: false
+        secure: false
+        same-site: lax
+  error:
+    # A05 / A09 - vaza stack trace e mensagem de excecao para o cliente
+    include-message: always
+    include-stacktrace: always
+    include-exception: true
+    include-binding-errors: always
+
+# A05 - TODOS os endpoints do Actuator expostos sem autenticacao
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    env:
+      show-values: always
+
+# ---------------------------------------------------------------------
+# Configuracoes da aplicacao (chaves fracas / hardcoded de proposito)
+# ---------------------------------------------------------------------
+portal:
+  # A02 - segredo do JWT fraco e commitado no repositorio
+  jwt:
+    secret: "portal-secret-2024"
+    expiration-ms: 86400000   # 24h - expiracao longa demais (A07)
+  upload:
+    # A05 - anexos gravados dentro de diretorio servido / sem isolamento
+    dir: ./uploads
+  # A02 - "chave" usada para "proteger" dados de pagamento (na verdade e so Base64)
+  crypto:
+    enabled: false
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    com.thrive.portal: DEBUG

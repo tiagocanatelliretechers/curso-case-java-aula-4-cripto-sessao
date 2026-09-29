@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Produtos - Portal B2B</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<header>
+    <strong>Portal de Pedidos B2B</strong>
+    <nav><a th:href="@{/produtos}">Produtos</a><a th:href="@{/pedidos}">Meus Pedidos</a><a th:href="@{/}">Inicio</a></nav>
+</header>
+<main>
+    <div class="card">
+        <h1>Catalogo de Produtos</h1>
+        <form th:action="@{/produtos/buscar}" method="get">
+            <input type="text" name="termo" th:value="${termo}" placeholder="Buscar produto..." style="width:70%"/>
+            <button type="submit">Buscar</button>
+        </form>
+    </div>
+    <div class="card">
+        <table>
+            <thead><tr><th>#</th><th>Nome</th><th>Descricao</th><th>Preco</th><th>Estoque</th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${produtos}">
+                <td th:text="${p.id}">1</td>
+                <td th:text="${p.nome}">Nome</td>
+                <td th:text="${p.descricao}">Descricao</td>
+                <td th:text="${p.preco}">0.00</td>
+                <td th:text="${p.estoque}">0</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(produtos)}"><td colspan="5">Nenhum produto encontrado.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

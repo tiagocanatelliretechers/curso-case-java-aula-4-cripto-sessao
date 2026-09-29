@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Cadastrar - Portal B2B</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<header><strong>Portal de Pedidos B2B</strong><nav><a th:href="@{/}">Inicio</a></nav></header>
+<main>
+    <div class="card" style="max-width:480px;margin:0 auto;">
+        <h1>Cadastro de Cliente</h1>
+        <form th:action="@{/registrar}" th:object="${form}" method="post">
+            <label>Razao Social</label>
+            <input type="text" th:field="*{razaoSocial}" style="width:100%"/>
+            <label>CNPJ</label>
+            <input type="text" th:field="*{cnpj}" style="width:100%"/>
+            <label>E-mail</label>
+            <input type="text" th:field="*{email}" style="width:100%"/>
+            <label>Senha</label>
+            <input type="password" th:field="*{senha}" style="width:100%"/>
+            <p><button type="submit" style="width:100%">Cadastrar</button></p>
+        </form>
+    </div>
+</main>
+</body>
+</html>

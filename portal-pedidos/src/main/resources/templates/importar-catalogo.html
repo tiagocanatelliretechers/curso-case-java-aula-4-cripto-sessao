@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Importar Catalogo - Portal B2B</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<header>
+    <strong>Portal de Pedidos B2B</strong>
+    <nav><a th:href="@{/produtos}">Produtos</a><a th:href="@{/}">Inicio</a></nav>
+</header>
+<main>
+    <div class="card">
+        <h1>Importar Catalogo do Fornecedor</h1>
+        <p class="warn">Baseline: busca qualquer URL informada (SSRF).</p>
+        <form th:action="@{/importar-catalogo}" method="post">
+            <label>URL do catalogo</label>
+            <input type="text" name="url" style="width:80%" placeholder="https://fornecedor.exemplo/catalogo.csv"/>
+            <button type="submit">Importar</button>
+        </form>
+        <div class="err" th:if="${erro}" th:text="${erro}"></div>
+        <pre th:if="${conteudo}" th:text="${conteudo}"></pre>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Recuperar senha - Portal B2B</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<header><strong>Portal de Pedidos B2B</strong><nav><a th:href="@{/login}">Entrar</a></nav></header>
+<main>
+    <div class="card" style="max-width:420px;margin:0 auto;">
+        <h1>Recuperar senha</h1>
+        <div class="msg" th:if="${mensagem}" th:text="${mensagem}"></div>
+        <form th:action="@{/esqueci-senha}" method="post">
+            <label>E-mail</label>
+            <input type="text" name="email" style="width:100%"/>
+            <p><button type="submit" style="width:100%">Enviar</button></p>
+        </form>
+    </div>
+</main>
+</body>
+</html>

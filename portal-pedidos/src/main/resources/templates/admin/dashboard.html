@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Admin - Portal B2B</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<header>
+    <strong>Portal de Pedidos B2B - Admin</strong>
+    <nav><a th:href="@{/}">Inicio</a><a th:href="@{/logout}">Sair</a></nav>
+</header>
+<main>
+    <p class="warn">Este painel deveria ser restrito a ROLE_ADMIN (baseline: acessivel a qualquer logado).</p>
+    <div class="card">
+        <h2>Clientes e Dados de Pagamento</h2>
+        <table>
+            <thead><tr><th>#</th><th>Razao Social</th><th>CNPJ</th><th>Dados de pagamento (revelado)</th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${clientes}">
+                <td th:text="${c.id}"></td>
+                <td th:text="${c.razaoSocial}"></td>
+                <td th:text="${c.cnpj}"></td>
+                <td th:text="${pagamentos[c.id]}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="card">
+        <h2>Usuarios</h2>
+        <table>
+            <thead><tr><th>#</th><th>E-mail</th><th>Role</th><th>Hash da senha (MD5)</th></tr></thead>
+            <tbody>
+            <tr th:each="u : ${usuarios}">
+                <td th:text="${u.id}"></td>
+                <td th:text="${u.email}"></td>
+                <td th:text="${u.role}"></td>
+                <td th:text="${u.senha}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="card">
+        <h2>Todos os Pedidos</h2>
+        <table>
+            <thead><tr><th>#</th><th>Cliente ID</th><th>Status</th><th>Total</th></tr></thead>
+            <tbody>
+            <tr th:each="pd : ${pedidos}">
+                <td th:text="${pd.id}"></td>
+                <td th:text="${pd.clienteId}"></td>
+                <td th:text="${pd.status}"></td>
+                <td th:text="${pd.total}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

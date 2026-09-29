@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Meus Pedidos - Portal B2B</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+<header>
+    <strong>Portal de Pedidos B2B</strong>
+    <nav><a th:href="@{/produtos}">Produtos</a><a th:href="@{/pedidos}">Meus Pedidos</a><a th:href="@{/logout}">Sair</a></nav>
+</header>
+<main>
+    <div class="msg" th:if="${mensagem}" th:text="${mensagem}"></div>
+    <div class="card">
+        <h1>Meus Pedidos</h1>
+        <table>
+            <thead><tr><th>#</th><th>Status</th><th>Total</th><th>Data</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="pd : ${pedidos}">
+                <td th:text="${pd.id}">1</td>
+                <td th:text="${pd.status}">ABERTO</td>
+                <td th:text="${pd.total}">0.00</td>
+                <td th:text="${#temporals.format(pd.dataCriacao, 'dd/MM/yyyy HH:mm')}">data</td>
+                <td><a th:href="@{'/pedidos/' + ${pd.id}}">ver</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(pedidos)}"><td colspan="5">Nenhum pedido.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="card">
+        <h2>Novo Pedido</h2>
+        <form th:action="@{/pedidos}" method="post">
+            <label>Produto</label>
+            <select name="produtoId">
+                <option th:each="p : ${produtos}" th:value="${p.id}" th:text="${p.nome}"></option>
+            </select>
+            <label>Quantidade</label>
+            <input type="number" name="quantidade" value="1" min="1"/>
+            <p><button type="submit">Criar pedido</button></p>
+        </form>
+    </div>
+</main>
+</body>
+</html>
