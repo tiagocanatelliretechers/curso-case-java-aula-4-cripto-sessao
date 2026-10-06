@@ -1,0 +1,236 @@
+{
+  "info": {
+    "name": "Aula 4 — CSRF (forjado × legítimo)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Demonstra CSRF em fluxo por cookie. RODE NA ORDEM 1→5.\n\nApp: ./scripts/start.sh --no-docker (baseURL=http://localhost:8080).\nNo hardened o login exige o token CSRF — por isso a req 1 (GET /login) captura o token antes.\nAbra o Console do Postman para ver os códigos.\n\nResumo: req 3 (sem token) = 302 no baseline (VULN) e 403 no hardened (OK); req 5 (com token) = 302 (legítimo)."
+  },
+  "variable": [
+    {
+      "key": "baseURL",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "csrf",
+      "value": ""
+    },
+    {
+      "key": "csrf2",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1 · GET /login (captura cookie + {{csrf}})",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseURL}}/login",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "description": "Carrega a página de login: o Postman guarda o cookie JSESSIONID e o teste extrai o token CSRF (campo hidden _csrf) para {{csrf}}. No baseline (CSRF off) o campo não existe e {{csrf}} fica vazio — tudo bem."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var m=pm.response.text().match(/name=\"_csrf\"[^>]*value=\"([^\"]*)\"/);",
+              "pm.collectionVariables.set('csrf', m?m[1]:'');",
+              "console.log('csrf (pré-login) =', pm.collectionVariables.get('csrf') || '(vazio = baseline)');",
+              "pm.test('login page 200',()=>pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "2 · POST /login (com _csrf)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "joao@acme.com"
+            },
+            {
+              "key": "password",
+              "value": "senha123"
+            },
+            {
+              "key": "_csrf",
+              "value": "{{csrf}}"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseURL}}/login",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "description": "Autentica como João. No hardened o _csrf é obrigatório (por isso a requisição 1 vem antes). No baseline o _csrf é ignorado."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('login ok (302/200)',()=>pm.expect([302,200]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "3 · CSRF FORJADO — POST /pedidos SEM token  (302=VULN / 403=OK)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "produtoId",
+              "value": "1"
+            },
+            {
+              "key": "quantidade",
+              "value": "1"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseURL}}/pedidos",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "pedidos"
+          ]
+        },
+        "description": "Ação de escrita SEM token CSRF, usando o cookie de sessão (simula um site externo).\n\nBASELINE (CSRF off): 302 — a ação forjada passou.\nHARDENED (CSRF on): 403 — bloqueado.\n\nObs.: o corpo correto usa produtoId (não 'item')."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "console.log('POST forjado (sem CSRF) -> '+pm.response.code+'  (302=baseline VULN, 403=hardened OK)');",
+              "pm.test('302=baseline(VULN) ou 403=hardened(OK)',()=>pm.expect([302,200,403]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "4 · (legítimo) GET /pedidos — captura {{csrf2}}",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseURL}}/pedidos",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "pedidos"
+          ]
+        },
+        "description": "Pega um token CSRF fresco de uma página já autenticada (o token muda após o login por regeneração de sessão)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var m=pm.response.text().match(/name=\"_csrf\"[^>]*value=\"([^\"]*)\"/);",
+              "pm.collectionVariables.set('csrf2', m?m[1]:'');",
+              "pm.test('pedidos page ok',()=>pm.expect([200,302]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    },
+    {
+      "name": "5 · Pedido legítimo — POST COM token (302)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "produtoId",
+              "value": "1"
+            },
+            {
+              "key": "quantidade",
+              "value": "1"
+            },
+            {
+              "key": "_csrf",
+              "value": "{{csrf2}}"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseURL}}/pedidos",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "pedidos"
+          ]
+        },
+        "description": "Fluxo legítimo: com o token CSRF, a criação funciona nos dois estados (302). Prova que a proteção não atrapalha o uso normal."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('legítimo com token: 302/200',()=>pm.expect([302,200]).to.include(pm.response.code));"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ]
+}

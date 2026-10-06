@@ -166,14 +166,20 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/api/pedidos -H "A
 **Passo a passo:**
 1. No `SecurityConfig`, **remova** o `.csrf(disable)` dos fluxos web (mantendo a API stateless separada).
 2. Garanta que os formulários Thymeleaf enviem o token (o Spring injeta em forms com `th:action`).
-3. Teste o ataque: dispare um POST **sem** token para um endpoint de escrita (ex.: `/pedidos`), simulando um site externo:
+3. Teste o ataque: dispare um POST **sem** token para um endpoint de escrita (`/pedidos`), simulando um site externo. O corpo correto usa `produtoId`/`quantidade`. **Atenção:** no hardened, até o login exige o token CSRF — então pegue o token da página de login primeiro:
    ```bash
-   curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8080/pedidos \
-     -b cookies.txt -d "item=X&quantidade=1"     # sem token CSRF
+   # 1) cookie + token CSRF da página de login
+   TOKEN=$(curl -s -c j.txt http://localhost:8080/login | grep -oE 'name="_csrf"[^>]*value="[^"]*"' | grep -oE 'value="[^"]*"' | sed 's/value="//;s/"//')
+   # 2) loga com o token
+   curl -s -b j.txt -c j.txt --data-urlencode "username=joao@acme.com" --data-urlencode "password=senha123" --data-urlencode "_csrf=$TOKEN" http://localhost:8080/login -o /dev/null
+   # 3) ataque: POST sem token CSRF
+   curl -s -o /dev/null -w '%{http_code}\n' -b j.txt -X POST http://localhost:8080/pedidos \
+     --data-urlencode "produtoId=1" --data-urlencode "quantidade=1"
    ```
-   - *O que observar:* **403** (bloqueado).
+   - *O que observar:* **403** (bloqueado) no hardened; **302** no baseline (passou).
    - *O que isso significa:* sem o token, o servidor não confia na origem da requisição.
-4. Confirme que o fluxo normal (formulário com token) continua funcionando.
+   > Mais simples: use a collection `materiais/postman/Aula4-CSRF...json` (extrai o token sozinha).
+4. Confirme o fluxo normal: pegue um token fresco de `/pedidos` (já logado) e inclua `_csrf` no POST → **302** (funciona).
 
 **Ponto de entendimento:** *Por que a API com JWT no header não precisa de proteção CSRF?*
 > Resposta esperada: o navegador não anexa automaticamente um header `Authorization`; o atacante não consegue forjá-lo a partir de outro site, então o vetor CSRF não se aplica.

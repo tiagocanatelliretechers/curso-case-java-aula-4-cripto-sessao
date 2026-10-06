@@ -110,22 +110,31 @@ Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token); // verifi
 
 **O que falar:** "Um site externo consegue disparar uma ação no Portal usando o cookie da vítima? Vamos testar."
 
-### 4a) Prepare uma sessão (cookie) autenticada
-```bash
-# guarde o cookie de uma sessão logada (ajuste conforme o fluxo de login web)
-curl -s -c cookies.txt -d "username=joao@acme.com&password=senha123" http://localhost:8080/login -o /dev/null
-```
+> **Importante:** o corpo correto do POST é `produtoId` e `quantidade` (não `item`). E, no **hardened**, até o **login** exige o token CSRF — por isso o fluxo abaixo pega o token da página de login antes. **A forma mais simples de rodar isto é pela collection Postman `materiais/postman/Aula4-CSRF...json`** (ela extrai o token sozinha). Abaixo, a versão curl.
 
-### 4b) POST forjado, sem token CSRF
+### 4a) Baseline (CSRF off) — ataque direto funciona
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8080/pedidos -b cookies.txt -d "item=X&quantidade=1"
+curl -s -c cookies.txt --data-urlencode "username=joao@acme.com" --data-urlencode "password=senha123" http://localhost:8080/login -o /dev/null
+curl -s -o /dev/null -w 'forjado -> %{http_code}\n' -X POST http://localhost:8080/pedidos -b cookies.txt \
+  --data-urlencode "produtoId=1" --data-urlencode "quantidade=1"
 ```
-- **Baseline (CSRF off):** aceita (`200/302`) — a ação forjada passou.
-- **Hardened (CSRF on):** **403** — sem token, bloqueado.
+- **Esperado (baseline):** `forjado -> 302` — a ação forjada **passou** (CSRF desligado).
+
+### 4b) Hardened (CSRF on) — precisa do token até para logar
+```bash
+# 1) pega cookie + token CSRF da página de login
+TOKEN=$(curl -s -c j.txt http://localhost:8080/login | grep -oE 'name="_csrf"[^>]*value="[^"]*"' | grep -oE 'value="[^"]*"' | sed 's/value="//;s/"//')
+# 2) loga COM o token
+curl -s -b j.txt -c j.txt --data-urlencode "username=joao@acme.com" --data-urlencode "password=senha123" --data-urlencode "_csrf=$TOKEN" http://localhost:8080/login -o /dev/null
+# 3) POST forjado SEM token -> deve ser bloqueado
+curl -s -o /dev/null -w 'forjado(sem csrf) -> %{http_code}\n' -b j.txt -X POST http://localhost:8080/pedidos \
+  --data-urlencode "produtoId=1" --data-urlencode "quantidade=1"
+```
+- **Esperado (hardened):** `forjado(sem csrf) -> 403` — bloqueado. (Com o token, o fluxo legítimo retorna 302.)
 
 ### 4c) Mostre o código
-Abra **`SecurityConfig.java`** (hardened) — o `.csrf(...)` deixou de estar `disable` para a web; a API stateless segue com token no header.
-- **O que dizer:** "O token CSRF prova que a requisição veio da nossa página. A API com JWT no header não é afetada."
+Abra **`SecurityConfig.java`** (hardened) — o `.csrf(...)` deixou de ser `disable`: fica ligado para a web e só ignora a API (`ignoringRequestMatchers("/api/**")`).
+- **O que dizer:** "O token CSRF prova que a requisição veio da nossa página. A API com JWT no header não é afetada (o navegador não anexa esse header sozinho)."
 
 ---
 
