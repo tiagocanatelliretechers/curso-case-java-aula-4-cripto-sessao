@@ -20,16 +20,18 @@ git checkout aula-4-baseline
 **O que falar:** "O Portal diz que 'protege' o cartão. Vamos ver o que é essa proteção."
 
 ### 1a) A falsa proteção (baseline)
-No H2 (`/h2-console`, `jdbc:h2:mem:portal`, `sa/sa`):
+O dado de pagamento fica na tabela **`cliente`** (coluna `dados_pagamento`). No H2 (`/h2-console`, URL JDBC `jdbc:h2:mem:portal`, usuário/senha `sa`/`sa`):
 ```sql
-SELECT dados_pagamento FROM pedido;   -- (ou onde o pagamento é guardado)
+SELECT razao_social, dados_pagamento FROM cliente;
 ```
-Copie o valor e decodifique no terminal:
+Copie o valor (ex.: da ACME) e decodifique no terminal — **sem chave nenhuma**:
 ```bash
 echo "VklTQSA0MTExIDExMTEgMTExMSAxMTExIHZhbCAxMi8yNyBjdnYgMTIz" | base64 -d
 ```
 - **Esperado:** `VISA 4111 1111 1111 1111 val 12/27 cvv 123` — cartão em texto claro.
 - **O que dizer:** "Sem chave, sem segredo. Base64 é só um envelope transparente."
+
+> **Alternativa visual (sem H2):** logue como `admin@portal.com`/`admin123` e abra **`/admin`** — a tabela "Dados de pagamento (revelado)" mostra o cartão em claro. (Isto prova a exposição; o diferencial do antes/depois é o **valor armazenado**, que você vê no `SELECT`.)
 
 ### 1b) Cifra de verdade (hardened)
 ```bash
@@ -37,9 +39,10 @@ git checkout aula-4-hardened
 export PORTAL_CRYPTO_KEY=$(head -c 32 /dev/urandom | base64)
 ./scripts/start.sh --lab 4 --no-docker
 ```
-No H2, rode o mesmo `SELECT`:
-- **Esperado:** um blob Base64 que, ao `base64 -d`, **não** vira o cartão (é ciphertext AES-GCM).
+No H2, rode o **mesmo** `SELECT razao_social, dados_pagamento FROM cliente;`:
+- **Esperado:** agora o `dados_pagamento` é um **blob diferente** (o `SeedCryptoRunner` cifra o seed com AES-GCM na subida). Ao copiar e `base64 -d`, **não** vira o cartão — sai binário/lixo (é ciphertext, não codificação).
 - **O que dizer:** "Agora sem a chave (`PORTAL_CRYPTO_KEY`) ninguém recupera. A chave vive fora do código."
+- *(No `/admin` o admin continua vendo o cartão revelado — porque ele tem a chave. A diferença do antes/depois está no **valor armazenado**, não na tela do admin.)*
 
 ### 1c) Mostre o código
 Abra **`CryptoService.java`** (hardened) e destaque:

@@ -41,10 +41,15 @@ Ao final você deve conseguir **explicar**:
 **Conceito em 1 minuto:** **codificar** (Base64) transforma bytes em texto de forma reversível *e pública* — não protege nada. **Cifrar** exige uma **chave secreta**. Use **AES-256-GCM** (AEAD = *Authenticated Encryption*): além de esconder o dado (confidencialidade), detecta adulteração (integridade). Duas regras de ouro: a **chave vive fora do código** (variável de ambiente/secret manager) e o **IV/nonce** (12 bytes) é **único por operação**, gerado com `SecureRandom` — reusar IV no GCM quebra a segurança.
 
 **Passo 0 — prove que Base64 não protege:**
+O dado de pagamento fica na tabela **`cliente`** (coluna `dados_pagamento`). Pegue o valor no H2 (`/h2-console`, JDBC `jdbc:h2:mem:portal`, `sa`/`sa`):
+```sql
+SELECT razao_social, dados_pagamento FROM cliente;
+```
+Copie o valor e decodifique no terminal (sem chave nenhuma):
 ```bash
 echo "VklTQSA0MTExIDExMTEgMTExMSAxMTExIHZhbCAxMi8yNyBjdnYgMTIz" | base64 -d
 ```
-- *O que observar:* o número do cartão volta **em texto claro**.
+- *O que observar:* o número do cartão volta **em texto claro** (ou veja revelado em `/admin` como admin).
 - *O que isso significa:* não havia proteção — só codificação. Sem chave, sem segredo.
 
 **Passo a passo (correção):**
@@ -68,7 +73,7 @@ echo "VklTQSA0MTExIDExMTEgMTExMSAxMTExIHZhbCAxMi8yNyBjdnYgMTIz" | base64 -d
    - *O que observar:* a chave nasce fora do código.
 
 3. Regrave os dados de pagamento cifrados e valide:
-   - *O que observar:* no banco (H2), o valor agora é um blob Base64 que **não decodifica** para o cartão; com a chave, o serviço recupera o original.
+   - *O que observar:* rode de novo `SELECT razao_social, dados_pagamento FROM cliente;` — o valor agora é um blob que, no `base64 -d`, **não** vira o cartão (é ciphertext AES-GCM); com a chave, o serviço recupera o original.
    - *O que isso significa:* confidencialidade em repouso + chave separada do dado.
 
 **Ponto de entendimento:** *Por que não podemos reutilizar o mesmo IV para cifrar vários registros?*
