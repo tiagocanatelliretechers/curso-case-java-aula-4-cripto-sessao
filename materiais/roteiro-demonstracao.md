@@ -108,9 +108,26 @@ Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token); // verifi
 
 ## DEMO 4 — CSRF  · ~5 min
 
-**O que falar:** "Um site externo consegue disparar uma ação no Portal usando o cookie da vítima? Vamos testar."
+**O que falar:** "Uma requisição que não veio da nossa página consegue disparar uma ação usando o cookie da vítima? Vamos testar."
 
-> **Importante:** o corpo correto do POST é `produtoId` e `quantidade` (não `item`). E, no **hardened**, até o **login** exige o token CSRF — por isso o fluxo abaixo pega o token da página de login antes. **A forma mais simples de rodar isto é pela collection Postman `materiais/postman/Aula4-CSRF...json`** (ela extrai o token sozinha). Abaixo, a versão curl.
+### ⭐ 4·TELA — jeito recomendado para DEMONSTRAR AO VIVO (navegador + DevTools)
+É o mais visual e o que melhor isola o **token CSRF** (sem terminal, sem extrair token).
+1. No **Chrome/Edge**, faça login normalmente no Portal como `joao@acme.com`/`senha123` (o formulário já inclui o token — por isso o login funciona nos dois estados).
+2. Abra o **DevTools** (F12) → aba **Console** e cole uma requisição de escrita **sem o token CSRF** (simula um pedido forjado):
+   ```js
+   fetch('/pedidos', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'produtoId=1&quantidade=1'})
+     .then(r => console.log('STATUS =', r.status));
+   ```
+   - **Baseline (CSRF off):** `STATUS = 200` → atualize "Meus Pedidos" e **mostre o pedido forjado criado**.
+   - **Hardened (CSRF on):** `STATUS = 403` → **bloqueado** (faltou o token).
+3. Em seguida, **crie um pedido pela tela normal** (botão "Novo Pedido") — funciona nos **dois** estados, porque o formulário do app envia o token. Mostra que a proteção não atrapalha o uso legítimo.
+4. Abra o **`SecurityConfig.java`** (hardened) e mostre o `.csrf(...)` ligado para a web.
+
+> **Por que não uma "página externa" (outro site)?** O cookie já está com `SameSite=lax` (Lab 4.3), que por si só bloqueia o cookie em POST vindo de outro site. Para demonstrar **especificamente o token CSRF**, usamos a mesma origem (DevTools) **sem o token** — assim a única variável é o token.
+
+---
+
+> Alternativas abaixo (Postman / terminal). O corpo correto é `produtoId`/`quantidade` (não `item`); no **hardened**, até o **login via curl** exige o token. **A collection `materiais/postman/Aula4-CSRF...json` extrai o token sozinha** — boa para tela compartilhada também.
 
 ### 4a) Baseline (CSRF off) — ataque direto funciona
 ```bash
